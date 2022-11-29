@@ -6,6 +6,7 @@
   "scripts": {
     "start": "npm run build && node dist/main",
     "build": "tsc",
+    "postbuild": "cp package.json dist/package.json && cd dist && npm install --only=production",
     "test": "jest"
   },
   "repository": {
