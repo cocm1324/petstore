@@ -3,6 +3,7 @@
     "version": "0.0.1",
     "description": "Demonstration project for tech stacks",
     "main": "main.ts",
+    "type": "module",
     "scripts": {
         "start": "npm run build && node dist/main",
         "build": "tsc",
@@ -20,7 +21,9 @@
     },
     "homepage": "https://github.com/cocm1324/petstore#readme",
     "devDependencies": {
+        "@types/aws-lambda": "^8.10.109",
         "@types/jest": "^29.2.3",
+        "@types/serverless": "^3.12.9",
         "jest": "^29.3.1",
         "ts-jest": "^29.0.3",
         "ts-node": "^10.9.1",

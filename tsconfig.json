@@ -1,16 +1,22 @@
 {
     "compilerOptions": {
-        "module": "ES6",
+        "module": "CommonJS",
         "target": "ES6",
-        "sourceMap": true,
         "outDir": "dist",
         "baseUrl": "./",
         "moduleResolution": "Node",
+        "strict": true,
+        "preserveConstEnums": true,
+        "noEmit": true,
+        "sourceMap": false,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
         "paths": {
             
-        },
-        "esModuleInterop": true
+        }
     },
     "include": ["src/**/*"],
-    "exclude": ["node_modules", "**/*.spec.ts"]
+    "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
 }
