@@ -1,14 +1,12 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { Context, APIGatewayProxyResult, APIGatewayEvent } from 'aws-lambda';
 
-export const hello = (event: APIGatewayProxyEvent): APIGatewayProxyResult => {
-    console.log(event);
+export const healthCheck = async (event: APIGatewayEvent, context: Context): Promise<APIGatewayProxyResult> => {
+    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+    console.log(`Context: ${JSON.stringify(context, null, 2)}`);
     return {
         statusCode: 200,
-        body: JSON.stringify(
-            {
-                message: "Go Serverless v3.0! Your function executed successfully!",
-                input: event,
-            },
-        )
+        body: JSON.stringify({
+            message: 'hello world',
+        }),
     };
-}
+};

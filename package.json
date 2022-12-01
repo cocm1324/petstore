@@ -1,9 +1,9 @@
 {
     "name": "petstore",
     "version": "0.0.1",
+    "author": "Jaeeun Cho",
+    "license": "MIT",
     "description": "Demonstration project for tech stacks",
-    "main": "main.ts",
-    "type": "module",
     "scripts": {
         "start": "npm run build && node dist/main",
         "build": "tsc",
@@ -14,12 +14,13 @@
         "type": "git",
         "url": "git+https://github.com/cocm1324/petstore.git"
     },
-    "author": "Jaeeun Cho",
-    "license": "MIT",
     "bugs": {
         "url": "https://github.com/cocm1324/petstore/issues"
     },
     "homepage": "https://github.com/cocm1324/petstore#readme",
+    "dependencies": {
+        "aws-lambda": "^1.0.7"
+    },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.109",
         "@types/jest": "^29.2.3",

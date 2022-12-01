@@ -1,5 +1,5 @@
-import { APIGatewayProxyEvent } from 'aws-lambda';
-import { hello } from './main';
+import { APIGatewayProxyEvent, Context } from 'aws-lambda';
+import { healthCheck } from './main';
 
 const mockEvent: APIGatewayProxyEvent = {
     headers: {},
@@ -45,6 +45,21 @@ const mockEvent: APIGatewayProxyEvent = {
     body: ''
 }
 
+const mockContext: Context = {
+    callbackWaitsForEmptyEventLoop: false,
+    functionName: '',
+    functionVersion: '',
+    invokedFunctionArn: '',
+    memoryLimitInMB: '',
+    awsRequestId: '',
+    logGroupName: '',
+    logStreamName: '',
+    getRemainingTimeInMillis: () => 0,
+    done: (error, result) => { console.log(error, result) },
+    fail: (error) => console.log,
+    succeed: (message) => console.log
+}
+
 test('Test if it runs without error', async () => {
-    expect(hello(mockEvent)).toBeDefined();
+    expect(healthCheck(mockEvent, mockContext)).resolves.toBeDefined();
 });

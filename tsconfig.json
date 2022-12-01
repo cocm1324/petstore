@@ -2,8 +2,6 @@
     "compilerOptions": {
         "module": "CommonJS",
         "target": "ES6",
-        "outDir": "dist",
-        "baseUrl": "./",
         "moduleResolution": "Node",
         "strict": true,
         "preserveConstEnums": true,
@@ -13,10 +11,11 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "isolatedModules": true,
+        "outDir": "dist",
         "paths": {
             
         }
     },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+    "include": [ "src/**/*" ],
+    "exclude": [ "node_modules", "**/*.spec.ts", "**/*.test.ts"]
 }
