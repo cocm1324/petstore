@@ -1,0 +1,15 @@
+service: petstore-sample-project
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: us-west-1
+
+functions:
+  healthCheck:
+    handler: dist/main.healthCheck
+    events:
+      - http:
+          path: /
+          method: get
