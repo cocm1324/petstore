@@ -7,8 +7,8 @@ provider:
   region: us-west-1
 
 functions:
-  hello:
-    handler: dist/main.hello
+  healthCheck:
+    handler: dist/main.healthCheck
     events:
       - http:
           path: /

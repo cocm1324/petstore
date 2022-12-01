@@ -5,16 +5,12 @@
         "moduleResolution": "Node",
         "strict": true,
         "preserveConstEnums": true,
-        "noEmit": true,
         "sourceMap": false,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "isolatedModules": true,
         "outDir": "dist",
-        "paths": {
-            
-        }
     },
     "include": [ "src/**/*" ],
     "exclude": [ "node_modules", "**/*.spec.ts", "**/*.test.ts"]
