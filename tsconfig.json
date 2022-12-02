@@ -4,13 +4,15 @@
         "target": "ES6",
         "moduleResolution": "Node",
         "strict": true,
+        "allowJs": true,
         "preserveConstEnums": true,
-        "sourceMap": false,
+        "sourceMap": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "isolatedModules": true,
-        "outDir": "dist",
+        "outDir": ".build",
+        "rootDir": "./"
     },
     "include": [ "src/**/*" ],
     "exclude": [ "node_modules", "**/*.spec.ts", "**/*.test.ts"]

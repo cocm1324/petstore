@@ -1,15 +1,36 @@
 service: petstore-sample-project
+
 frameworkVersion: '3'
+
+plugins:
+  - serverless-plugin-typescript
 
 provider:
   name: aws
   runtime: nodejs16.x
   region: us-west-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: arn:aws:dynamodb:us-west-1:*:*
+
+resources:
+  # DynamoDB
+  - ${file(resources/dynamodb-table.yml)}
 
 functions:
   healthCheck:
-    handler: dist/main.healthCheck
+    handler: src/main.healthCheck
     events:
-      - http:
-          path: /
-          method: get
+      - httpApi: GET /
+  createPet:
+    handler: src/handlers/pet/createPet.createPet
+    events:
+      - httpApi: POST /pet

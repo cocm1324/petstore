@@ -108,3 +108,6 @@ package-lock.json
 
 # Serverless directories
 .serverless
+
+# TSC build output
+.build
