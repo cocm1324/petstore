@@ -19,11 +19,29 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
+        - dynamodb:ConditionCheckItem
       Resource: arn:aws:dynamodb:us-west-1:*:*
 
 resources:
-  # DynamoDB
-  - ${file(resources/dynamodb-table.yml)}
+  Resources:
+    PetTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        TableName: 'pet'
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: type
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: type
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 2
+          WriteCapacityUnits: 2
 
 functions:
   healthCheck:
@@ -31,6 +49,26 @@ functions:
     events:
       - httpApi: GET /
   createPet:
-    handler: src/handlers/pet/createPet.createPet
+    handler: src/handlers/createPet.createPet
     events:
       - httpApi: POST /pet
+  listPet:
+    handler: src/handlers/listPet.listPet
+    events:
+      - httpApi: GET /pet
+  getPet:
+    handler: src/handlers/getPet.getPet
+    events:
+      - httpApi: GET /pet/{petId}
+  updatePet:
+    handler: src/handlers/updatePet.updatePet
+    events:
+      - httpApi: PUT /pet/{petId}
+  deletePet:
+    handler: src/handlers/deletePet.deletePet
+    events:
+      - httpApi: DELETE /pet/{petId}
+  createStoreOrder:
+    handler: src/handlers/createStoreOrder.createStoreOrder
+    events:
+      - httpApi: POST /store/order
