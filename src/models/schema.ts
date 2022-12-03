@@ -71,3 +71,28 @@ export const UploadImagePetRequestBodySchema = Joi.object({
 
     files: Joi.array().min(1).required()
 });
+
+export const ListPetQuerySchema = Joi.object({
+    status: Joi.string()
+        .valid(...Object.values(PetStatus))
+})
+
+export const CreateStoreOrderRequestBodySchema = Joi.object({
+    petId: Joi.string()
+        .uuid()
+        .required(),
+    
+    quantity: Joi.number()
+        .integer()
+        .positive()
+        .default(1),
+    
+    shipDate: Joi.date(),
+
+    status: Joi.string()
+        .valid(...Object.values(PetOrderStatus))
+        .default(PetOrderStatus.Placed),
+    
+    complete: Joi.boolean()
+        .default(false)
+});

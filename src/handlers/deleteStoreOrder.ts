@@ -11,7 +11,7 @@ export const deleteStoreOrder = async (event: APIGatewayEvent): Promise<APIGatew
     log.options.meta.event = event;
 
     const timestamp = (new Date()).toISOString();
-    
+
     const { value: pathParameter, error: paramError } = OrderIdParamSchema.validate(event.pathParameters, { abortEarly: false });
     if (paramError) {
         const arrayOfMessage: string[] = paramError.details.map(element => element.message);
