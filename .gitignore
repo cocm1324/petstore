@@ -111,3 +111,7 @@ package-lock.json
 
 # TSC build output
 .build
+
+# 
+config.ts
+credentials.json

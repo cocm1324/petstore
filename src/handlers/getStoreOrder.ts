@@ -3,14 +3,14 @@ import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
 import { HttpResultV2 } from '../libs';
 
-import { TableName, PetSortKeyMetadata, PetIdParamSchema, HttpStatusCode } from '../models';
+import { TableName, OrderIdParamSchema, PetSortKeyOrder, HttpStatusCode } from '../models';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
-export const getPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const getStoreOrder = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     log.options.meta.event = event;
     
-    const { value: pathParameter, error: paramError } = PetIdParamSchema.validate(event.pathParameters, { abortEarly: false });
+    const { value: pathParameter, error: paramError } = OrderIdParamSchema.validate(event.pathParameters, { abortEarly: false });
     if (paramError) {
         const arrayOfMessage: string[] = paramError.details.map(element => element.message);
         const message = JSON.stringify({ message: arrayOfMessage });
@@ -21,8 +21,8 @@ export const getPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
     const params: DynamoDB.DocumentClient.GetItemInput = {
         TableName: TableName.Pet,
         Key: {
-            id: pathParameter.petId,
-            type: PetSortKeyMetadata
+            id: pathParameter.orderId,
+            type: PetSortKeyOrder
         }
     };
 

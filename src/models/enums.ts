@@ -13,3 +13,12 @@ export enum PetOrderStatus {
 export enum TableName {
     Pet = 'pet'
 }
+
+export enum HttpStatusCode {
+    OK = 200,
+    Created = 201,
+    Invalid = 400,
+    NotFound = 404,
+    UnsupportedMediaType = 415,
+    InternalServerError = 500
+}

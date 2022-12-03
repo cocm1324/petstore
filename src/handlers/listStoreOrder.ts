@@ -3,17 +3,17 @@ import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
 import { HttpResultV2 } from '../libs';
 
-import { HttpStatusCode, PetSortKeyMetadata, TableName } from '../models';
+import { HttpStatusCode, PetSortKeyOrder, TableName } from '../models';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
-export const listPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const listStoreOrder = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     log.options.meta.event = event;
 
     const params: DynamoDB.DocumentClient.ScanInput = {
         TableName: TableName.Pet,
         ExpressionAttributeNames: { '#t': 'type' },
-        ExpressionAttributeValues: { ':t' : PetSortKeyMetadata },
+        ExpressionAttributeValues: { ':t' : PetSortKeyOrder },
         FilterExpression: '#t = :t'
     };
 

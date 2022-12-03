@@ -12,7 +12,8 @@
         "forceConsistentCasingInFileNames": true,
         "isolatedModules": true,
         "outDir": ".build",
-        "rootDir": "./"
+        "rootDir": "./",
+        "resolveJsonModule": true
     },
     "include": [ "src/**/*" ],
     "exclude": [ "node_modules", "**/*.spec.ts", "**/*.test.ts"]
