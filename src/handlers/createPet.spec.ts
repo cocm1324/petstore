@@ -1,4 +1,4 @@
-import { CreatePetRequestBodySchema } from '../../models';
+import { CreatePetRequestBodySchema } from '../models';
 
 test('Validation Test1: minimum required', () => {
     const testInput1 = {

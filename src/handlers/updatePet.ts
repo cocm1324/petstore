@@ -1,27 +1,24 @@
-import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
+import { HttpResultV2 } from '../libs';
 
-import { TableName, PetSortKeyMetadata, UpdatePetRequestBodySchema, PetRequestPetIdParamSchema } from '../models';
+import { TableName, PetSortKeyMetadata, UpdatePetRequestBodySchema, PetIdParamSchema, HttpStatusCode } from '../models';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
-export const updatePet = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
+export const updatePet = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     log.options.meta.event = event;
     
-    log.info('createPet started');
     const datetime = new Date().toISOString();
     const body = event.body ? JSON.parse(event.body) : {};
     
-    const { value: pathParameter, error: paramError } = PetRequestPetIdParamSchema.validate(event.pathParameters, { abortEarly: false });
+    const { value: pathParameter, error: paramError } = PetIdParamSchema.validate(event.pathParameters, { abortEarly: false });
     if (paramError) {
         const arrayOfMessage: string[] = paramError.details.map(element => element.message);
         const message = JSON.stringify({ message: arrayOfMessage });
         log.error(message);
-        return {
-            statusCode: 400,
-            body: message
-        }; 
+        return HttpResultV2(HttpStatusCode.Invalid, { message: arrayOfMessage });
     }
 
     const { value, error } = UpdatePetRequestBodySchema.validate(body, { abortEarly: false })
@@ -29,12 +26,8 @@ export const updatePet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
         const arrayOfMessage: string[] = error.details.map(element => element.message);
         const message = JSON.stringify({ message: arrayOfMessage });
         log.error(message);
-        return {
-            statusCode: 400,
-            body: message
-        };
+        return HttpResultV2(HttpStatusCode.Invalid, { message: arrayOfMessage });
     }
-    log.info('createPet validation completed');
 
     const params: DynamoDB.DocumentClient.UpdateItemInput = {
         TableName: TableName.Pet,
@@ -58,26 +51,13 @@ export const updatePet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
     };
 
     return dynamoDb.update(params).promise().then(result => {
-        console.log(result);
-        log.info('createPet completed');
-        return {
-            statusCode: 200,
-            body: JSON.stringify(result)
-        };
-
+        return HttpResultV2(HttpStatusCode.OK, result);
     }).catch(error => {
         log.error(JSON.stringify(error));
 
         if (error.code == 'ConditionalCheckFailedException') {
-            return {
-                statusCode: 404,
-                body: JSON.stringify({ message: 'Item with provided petId is not found' })
-            };
+            return HttpResultV2(HttpStatusCode.NotFound, { message: 'Item with provided petId is not found' });
         }
-
-        return {
-            statusCode: 500,
-            body: JSON.stringify(error)
-        }
+        return HttpResultV2(HttpStatusCode.InternalServerError, error);
     });
 }

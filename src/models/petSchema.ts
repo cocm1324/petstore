@@ -1,5 +1,5 @@
 import * as Joi from 'joi';
-import { PetStatus } from './enums';
+import { PetOrderStatus, PetStatus } from './enums';
 
 export const CreatePetRequestBodySchema = Joi.object({
     category: Joi.object({
@@ -24,8 +24,14 @@ export const CreatePetRequestBodySchema = Joi.object({
         .default(PetStatus.Available)
 });
 
-export const PetRequestPetIdParamSchema = Joi.object({
+export const PetIdParamSchema = Joi.object({
     petId: Joi.string()
+        .min(1)
+        .required()
+});
+
+export const OrderIdParamSchema = Joi.object({
+    orderId: Joi.string()
         .min(1)
         .required()
 });
@@ -51,4 +57,17 @@ export const UpdatePetRequestBodySchema = Joi.object({
     status: Joi.string()
         .valid(...Object.values(PetStatus))
         .default(PetStatus.Available)
+});
+
+export const UpdateStatusPetRequestBodySchema = Joi.object({
+    name: Joi.string(),
+
+    status: Joi.string()
+        .valid(...Object.values(PetOrderStatus))
+});
+
+export const UploadImagePetRequestBodySchema = Joi.object({
+    additionalMetadata: Joi.string(),
+
+    files: Joi.array().min(1).required()
 });

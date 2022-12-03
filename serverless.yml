@@ -20,6 +20,9 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
         - dynamodb:ConditionCheckItem
+        - s3:PutObject
+        - s3:GetObject
+        - s3:DeleteObject
       Resource: arn:aws:dynamodb:us-west-1:*:*
 
 resources:
@@ -48,6 +51,10 @@ functions:
     handler: src/main.healthCheck
     events:
       - httpApi: GET /
+  uploadImagePet:
+    handler: src/handlers/uploadImagePet.uploadImagePet
+    events:
+      - httpApi: POST /pet/{petId}/uploadImage
   createPet:
     handler: src/handlers/createPet.createPet
     events:
@@ -64,6 +71,10 @@ functions:
     handler: src/handlers/updatePet.updatePet
     events:
       - httpApi: PUT /pet/{petId}
+  updateStatusPet:
+    handler: src/handlers/updateStatusPet.updateStatusPet
+    events:
+      - httpApi: POST /pet/{petId}
   deletePet:
     handler: src/handlers/deletePet.deletePet
     events:
@@ -72,3 +83,19 @@ functions:
     handler: src/handlers/createStoreOrder.createStoreOrder
     events:
       - httpApi: POST /store/order
+  listStoreOrder:
+    handler: src/handlers/listStoreOrder.listStoreOrder
+    events:
+      - httpApi: GET /store/order
+  getStoreOrder:
+    handler: src/handlers/getStoreOrder.getStoreOrder
+    events:
+      - httpApi: GET /store/order/{orderId}
+  deleteStoreOrder:
+    handler: src/handlers/deleteStoreOrder.deleteStoreOrder
+    events:
+      - httpApi: DELETE /store/order/{orderId}
+  getStoreInventory:
+    handler: src/handlers/getStoreInventory.getStoreInventory
+    events:
+      - httpApi: GET /store/inventory
