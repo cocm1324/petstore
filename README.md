@@ -33,12 +33,12 @@ A sample project for demonstrating capability to implement simple full-stack app
 ## About Data
 
 ### Entities
-[data](https://user-images.githubusercontent.com/17560082/205663257-8127d216-4b62-45f0-8829-3a716febf086.png)
+![data](https://user-images.githubusercontent.com/17560082/205663257-8127d216-4b62-45f0-8829-3a716febf086.png)
 - There are 5 different data entities
 - The point is that 'pet' is related to every other entities and acts as a primary entites
 
 ### DynamoDB
-[dynamodb key](https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2018/09/10/dynamodb-partition-key-1.gif)
+![dynamodb key](https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2018/09/10/dynamodb-partition-key-1.gif)
 - DynamoDB has unique key system: a partition key or partition key / sort key combination as a primary key
 - We can have efficient design by grouping entities with single partition key. Entities would be sort key
 - Items with same partition key are placed near to each other. Groupping them and querying with partition key will make good performance
