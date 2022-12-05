@@ -1,9 +1,9 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
-import { HttpResultV2 } from '../libs';
 
-import { TableName, PetSortKeyMetadata, PetIdParamSchema, HttpStatusCode } from '../models';
+import { TableName, PetIdParamSchema, HttpStatusCode } from '../models';
+import { HttpResultV2 } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -18,23 +18,37 @@ export const deletePet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
         return HttpResultV2(HttpStatusCode.Invalid, { message: arrayOfMessage });
     }
 
-    const params: DynamoDB.DocumentClient.DeleteItemInput = {
-        TableName: TableName.Pet,
-        Key: {
-            id: pathParameter.petId,
-            type: PetSortKeyMetadata
-        },
-        ExpressionAttributeValues: { ':id': pathParameter.petId },
-        ConditionExpression: 'id = :id'
-    };
-
-    return dynamoDb.delete(params).promise().then(result => {
-        return HttpResultV2(HttpStatusCode.OK, result);
-
-    }).catch(error => {
-        if (error.code == 'ConditionalCheckFailedException') {
-            return HttpResultV2(HttpStatusCode.NotFound, { message: 'Item with provided petId is not found' });
+    try {
+        const scanParam: DynamoDB.DocumentClient.ScanInput = {
+            TableName: TableName.Pet,
+            ExpressionAttributeNames: { '#t': 'type' },
+            ExpressionAttributeValues: { ':id': pathParameter.petId }, 
+            FilterExpression: 'id = :id',
+            ProjectionExpression: '#t'
         }
+
+        const scanResult = await dynamoDb.scan(scanParam).promise();
+
+        if (!scanResult.Items || scanResult.Items.length == 0) return HttpResultV2(HttpStatusCode.OK, {});
+        const deleteRequests = scanResult.Items.map(item => {
+            return {
+                DeleteRequest: {
+                    Key: {
+                        'id': pathParameter.petId,
+                        'type': item.type
+                    }
+                }
+            }
+        });
+
+        const batchDeleteParam: DynamoDB.DocumentClient.BatchWriteItemInput = {
+            RequestItems: { [TableName.Pet]: deleteRequests }
+        }
+        const batchDeleteResult = await dynamoDb.batchWrite(batchDeleteParam).promise();
+
+        return HttpResultV2(HttpStatusCode.OK, {});
+
+    } catch (error) {
         return HttpResultV2(HttpStatusCode.InternalServerError, error);
-    });
+    }
 }

@@ -1,9 +1,9 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
-import { HttpResultV2 } from '../libs';
 
-import { TableName, OrderIdParamSchema, PetSortKeyOrder, HttpStatusCode } from '../models';
+import { TableName, OrderIdParamSchema, HttpStatusCode, PetSortKey } from '../models';
+import { HttpResultV2 } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -22,7 +22,7 @@ export const getStoreOrder = async (event: APIGatewayEvent): Promise<APIGatewayP
         TableName: TableName.Pet,
         Key: {
             id: pathParameter.orderId,
-            type: PetSortKeyOrder
+            type: PetSortKey.Order
         }
     };
 

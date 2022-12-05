@@ -1,9 +1,9 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
-import { HttpResultV2 } from '../libs';
 
-import { HttpStatusCode, PetSortKeyOrder, TableName } from '../models';
+import { HttpStatusCode, PetSortKey, TableName } from '../models';
+import { HttpResultV2 } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -13,7 +13,7 @@ export const listStoreOrder = async (event: APIGatewayEvent): Promise<APIGateway
     const params: DynamoDB.DocumentClient.ScanInput = {
         TableName: TableName.Pet,
         ExpressionAttributeNames: { '#t': 'type' },
-        ExpressionAttributeValues: { ':t' : PetSortKeyOrder },
+        ExpressionAttributeValues: { ':t' : PetSortKey.Order },
         FilterExpression: '#t = :t'
     };
 

@@ -3,7 +3,10 @@ import { DynamoDB } from 'aws-sdk';
 import { v4 } from 'uuid';
 import * as log from 'lambda-log';
 
-import { TableName, PetSortKeyMetadata, CreatePetRequestBodySchema, HttpStatusCode } from '../models';
+import { 
+    TableName, CreatePetRequestBodySchema, HttpStatusCode, IdPrefix,
+    PetSortKey, ImageSortKey, CategorySortKey 
+} from '../models';
 import { HttpResultV2 } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -11,7 +14,6 @@ const dynamoDb = new DynamoDB.DocumentClient();
 export const createPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     log.options.meta.event = event;
     
-    log.info('createPet started');
     const timestamp = new Date().toISOString();
 
     const body = event.body ? JSON.parse(event.body) : {};
@@ -22,26 +24,91 @@ export const createPet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
         log.error(message);
         return HttpResultV2(HttpStatusCode.Invalid, { message: arrayOfMessage });
     }
-    log.info('createPet validation completed');
 
-    const params = {
+    const petId = IdPrefix.Pet + v4();
+
+    const dbParams: DynamoDB.DocumentClient.TransactWriteItemsInput = {
+        TransactItems: []
+    };
+    const matadataParams: DynamoDB.DocumentClient.PutItemInput = {
         TableName: TableName.Pet,
         Item: {
-            id: v4(),
-            type: PetSortKeyMetadata,
+            id: petId,
+            type: PetSortKey.Metadata,
+            category: value.category,
             name: value.name,
-            photoUrls: value.photoUrls,
             status: value.status,
+            tags: value.tags,
+            photoUrls: value.photoUrls,
             createdAt: timestamp,
-            updatedAt: timestamp,
+            updatedAt: timestamp
         }
     };
+    dbParams.TransactItems.push({ Put: matadataParams });
 
-    return dynamoDb.put(params).promise().then(result => {
-        log.info('createPet completed');
-        return HttpResultV2(HttpStatusCode.Created, params.Item);
-    }).catch(error => {
+    if (value.photoUrls && value.photoUrls.length > 0) {
+        value.photoUrls.map((photo: string) => {
+            const photoId = IdPrefix.Image + v4() 
+            dbParams.TransactItems.push({ Put: {
+                TableName: TableName.Pet,
+                Item: {
+                    id: petId,
+                    type: photoId,
+                    url: photo,
+                    name: photoId
+                }
+            }});
+        });
+    }
+
+    if (value.category) {
+        const categoryId = IdPrefix.Category + value.category;
+        dbParams.TransactItems.push({ Put: {
+            TableName: TableName.Pet,
+            Item: {
+                id: petId,
+                type: categoryId,
+                name: value.category
+            }
+        }});
+        dbParams.TransactItems.push({ Put: {
+            TableName: TableName.Pet,
+            Item: {
+                id: categoryId,
+                type: CategorySortKey.Metadata,
+                name: value.category
+            }
+        }});
+    }
+
+    if (value.tags && value.tags.length > 0) {
+        value.tags.map((tag: any) => {
+            const tagId = IdPrefix.Tag + tag;
+            dbParams.TransactItems.push({ Put: {
+                TableName: TableName.Pet,
+                Item: {
+                    id: petId,
+                    type: tagId,
+                    name: tag
+                }
+            }});
+            dbParams.TransactItems.push({ Put: {
+                TableName: TableName.Pet,
+                Item: {
+                    id: tagId,
+                    type: PetSortKey.Metadata,
+                    name: tag
+                }
+            }})
+        });
+    }
+
+    try {
+        const result = await dynamoDb.transactWrite(dbParams).promise();
+        return HttpResultV2(HttpStatusCode.Created, {});
+    } catch (error) {
         log.error(JSON.stringify(error));
         return HttpResultV2(HttpStatusCode.InternalServerError, error);
-    });
+    }
 }
+

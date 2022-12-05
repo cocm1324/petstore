@@ -1,18 +1,17 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB, S3 } from 'aws-sdk';
-import { parse } from 'lambda-multipart-parser';
 import { v4 } from 'uuid';
+import { parse } from 'lambda-multipart-parser';
 import * as log from 'lambda-log';
 
-import { TableName, PetSortKeyMetadata, PetIdParamSchema, HttpStatusCode, UploadImagePetRequestBodySchema, PetStatus } from '../models';
+import { TableName, PetIdParamSchema, HttpStatusCode, UploadImagePetRequestBodySchema, IdPrefix, PetSortKey } from '../models';
 import { HttpResultV2 } from '../libs';
-
 import credentials from '../../credentials.json';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 const s3 = new S3(credentials);
 
-export const uploadImagePet = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const uploadPetImage = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     log.options.meta.event = event;
     
     const timestamp = (new Date()).toISOString();
@@ -46,42 +45,58 @@ export const uploadImagePet = async (event: APIGatewayEvent): Promise<APIGateway
     }
 
     const { filename, contentType, content } = value.files[0];
+    const imageId = IdPrefix.Image + v4();
 
-    const imageId = v4();
-    const imageMetadata = {
-        url: '',
-        filename: filename,
-        metadata: value.additionalMetadata
-    };
-    const s3Params: S3.PutObjectRequest = {
-        ACL: 'public-read',
-        Bucket: 'petstore-sample-project',
-        Key: 'image/' + imageId,
-        Body: content,
-        ContentType: contentType,
-    }
-    return s3.upload(s3Params).promise().then(result => {
-        const { Location } = result;
-        imageMetadata.url = Location;
+    try {
+        const s3Params: S3.PutObjectRequest = {
+            ACL: 'public-read',
+            Bucket: 'petstore-sample-project',
+            Key: 'image/' + imageId,
+            Body: content,
+            ContentType: contentType,
+        }
 
-        const dbParams: DynamoDB.DocumentClient.UpdateItemInput = {
+        const s3Result = await s3.upload(s3Params).promise();
+        const { Location } = s3Result;
+
+        const putImageParam: DynamoDB.DocumentClient.PutItemInput = {
+            TableName: TableName.Pet,
+            Item: {
+                id: pathParameter.petId,
+                type: imageId,
+                name: filename,
+                url: Location,
+                additionalMetadata: value.additionalMetadata
+            }
+        };
+
+        const updatePetParam: DynamoDB.DocumentClient.Update = {
             TableName: TableName.Pet,
             Key: {
                 id: pathParameter.petId,
-                type: PetSortKeyMetadata
+                type: PetSortKey.Metadata
             },
             ExpressionAttributeValues: { 
                 ':id': pathParameter.petId,
-                ':i': [ imageMetadata.url ],
+                ':i': [ Location ],
                 ':u': timestamp
             },
-            ConditionExpression: 'id = :id AND',
+            ConditionExpression: 'id = :id',
             UpdateExpression: 'SET photoUrls = list_append(photoUrls, :i), updatedAt = :u',
-        }
-        return dynamoDb.update(dbParams).promise();
-    }).then(result => {
-        return HttpResultV2(HttpStatusCode.OK, imageMetadata);
-    }).catch(error => {
+        };
+
+        const params: DynamoDB.DocumentClient.TransactWriteItemsInput = {
+            TransactItems: [
+                { Put: putImageParam },
+                { Update: updatePetParam }
+            ]
+        };
+
+        await dynamoDb.transactWrite(params).promise();
+
+        return HttpResultV2(HttpStatusCode.OK, {});
+
+    } catch (error) {
         return HttpResultV2(HttpStatusCode.InternalServerError, error);
-    });
+    };
 }
