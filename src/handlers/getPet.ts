@@ -1,10 +1,9 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
-import { HttpResultV2 } from '../libs';
-import { petSerializer } from '../libs/serializer';
 
 import { TableName, PetIdParamSchema, HttpStatusCode } from '../models';
+import { HttpResultV2, petSerializer } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -18,7 +17,6 @@ export const getPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
         log.error(message);
         return HttpResultV2(HttpStatusCode.Invalid, { message: arrayOfMessage });
     }
-
 
     try {
         const params: DynamoDB.DocumentClient.ScanInput = {

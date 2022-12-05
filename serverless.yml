@@ -20,9 +20,7 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
         - dynamodb:ConditionCheckItem
-        - s3:PutObject
-        - s3:GetObject
-        - s3:DeleteObject
+        - dynamodb:PartiQLSelect
       Resource: arn:aws:dynamodb:us-west-1:*:*
 
 resources:
@@ -37,22 +35,36 @@ resources:
             AttributeType: S
           - AttributeName: type
             AttributeType: S
+          - AttributeName: status
+            AttributeType: S
         KeySchema:
           - AttributeName: id
             KeyType: HASH
           - AttributeName: type
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 2
-          WriteCapacityUnits: 2
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        GlobalSecondaryIndexes:
+          - IndexName: status-index
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+              - AttributeName: type
+                KeyType: RANGE
+            Projection:
+              ProjectionType: 'ALL'
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
 
 functions:
   healthCheck:
     handler: src/main.healthCheck
     events:
       - httpApi: GET /
-  uploadImagePet:
-    handler: src/handlers/uploadImagePet.uploadImagePet
+  uploadPetImage:
+    handler: src/handlers/uploadPetImage.uploadPetImage
     events:
       - httpApi: POST /pet/{petId}/uploadImage
   createPet:
@@ -67,12 +79,16 @@ functions:
     handler: src/handlers/getPet.getPet
     events:
       - httpApi: GET /pet/{petId}
+  findPetByStatus:
+    handler: src/handlers/findPetByStatus.findPetByStatus
+    events:
+      - httpApi: GET /pet/findByStatus
   updatePet:
     handler: src/handlers/updatePet.updatePet
     events:
       - httpApi: PUT /pet/{petId}
-  updateStatusPet:
-    handler: src/handlers/updateStatusPet.updateStatusPet
+  updatePetStatus:
+    handler: src/handlers/updatePetStatus.updatePetStatus
     events:
       - httpApi: POST /pet/{petId}
   deletePet:

@@ -1,9 +1,9 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
-import { HttpResultV2 } from '../libs';
 
-import { TableName, PetSortKeyMetadata, OrderIdParamSchema, PetSortKeyOrder, PetStatus, PetOrderStatus, HttpStatusCode } from '../models';
+import { TableName, OrderIdParamSchema, PetStatus, PetOrderStatus, HttpStatusCode, PetSortKey } from '../models';
+import { HttpResultV2 } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -27,7 +27,7 @@ export const deleteStoreOrder = async (event: APIGatewayEvent): Promise<APIGatew
                     TableName: TableName.Pet,
                     Key: {
                         id: pathParameter.orderId,
-                        type: PetSortKeyOrder,
+                        type: PetSortKey.Order,
                     },
                     ExpressionAttributeNames: { '#s': 'status' },
                     ExpressionAttributeValues: { ':id': pathParameter.orderId, ':ds': PetOrderStatus.Delivered },
@@ -39,7 +39,7 @@ export const deleteStoreOrder = async (event: APIGatewayEvent): Promise<APIGatew
                     TableName: TableName.Pet,
                     Key: {
                         id: pathParameter.orderId,
-                        type: PetSortKeyMetadata
+                        type: PetSortKey.Metadata
                     },
                     ExpressionAttributeNames: { '#s': 'status' },
                     ExpressionAttributeValues: { 

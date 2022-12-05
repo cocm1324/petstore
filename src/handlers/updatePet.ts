@@ -1,9 +1,9 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
-import { HttpResultV2 } from '../libs';
 
-import { TableName, PetSortKeyMetadata, UpdatePetRequestBodySchema, PetIdParamSchema, HttpStatusCode } from '../models';
+import { TableName, UpdatePetRequestBodySchema, PetIdParamSchema, HttpStatusCode, PetSortKey } from '../models';
+import { HttpResultV2 } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -33,7 +33,7 @@ export const updatePet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
         TableName: TableName.Pet,
         Key: {
             id: pathParameter.petId,
-            type: PetSortKeyMetadata
+            type: PetSortKey.Metadata
         },
         ExpressionAttributeNames: {
             '#n': 'name',

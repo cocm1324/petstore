@@ -1,18 +1,17 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB, S3 } from 'aws-sdk';
-import { parse } from 'lambda-multipart-parser';
 import { v4 } from 'uuid';
+import { parse } from 'lambda-multipart-parser';
 import * as log from 'lambda-log';
 
 import { TableName, PetIdParamSchema, HttpStatusCode, UploadImagePetRequestBodySchema, IdPrefix } from '../models';
 import { HttpResultV2 } from '../libs';
-
 import credentials from '../../credentials.json';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 const s3 = new S3(credentials);
 
-export const uploadImagePet = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const uploadPetImage = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     log.options.meta.event = event;
     
     const timestamp = (new Date()).toISOString();
@@ -72,8 +71,8 @@ export const uploadImagePet = async (event: APIGatewayEvent): Promise<APIGateway
         }
 
         await dynamoDb.put(dbParams).promise();
-
         return HttpResultV2(HttpStatusCode.OK, {});
+
     } catch (error) {
         return HttpResultV2(HttpStatusCode.InternalServerError, error);
     };
