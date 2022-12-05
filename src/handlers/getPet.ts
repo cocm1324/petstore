@@ -2,8 +2,9 @@ import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
 import { HttpResultV2 } from '../libs';
+import { petSerializer } from '../libs/serializer';
 
-import { TableName, PetSortKeyMetadata, PetIdParamSchema, HttpStatusCode } from '../models';
+import { TableName, PetIdParamSchema, HttpStatusCode } from '../models';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -18,19 +19,23 @@ export const getPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
         return HttpResultV2(HttpStatusCode.Invalid, { message: arrayOfMessage });
     }
 
-    const params: DynamoDB.DocumentClient.GetItemInput = {
-        TableName: TableName.Pet,
-        Key: {
-            id: pathParameter.petId,
-            type: PetSortKeyMetadata
-        }
-    };
 
-    return dynamoDb.get(params).promise().then(result => {
-        if (!result.Item) return HttpResultV2(HttpStatusCode.NotFound, { message: 'Item with provided petId is not found' });
-        return HttpResultV2(HttpStatusCode.OK, result.Item);
-    }).catch(error => {
+    try {
+        const params: DynamoDB.DocumentClient.ScanInput = {
+            TableName: TableName.Pet,
+            ExpressionAttributeNames: { '#pk': 'id' },
+            ExpressionAttributeValues: { ':pk': pathParameter.petId },
+            FilterExpression: '#pk = :pk'
+        };
+
+        const result = await dynamoDb.scan(params).promise();
+        if (!result.Items) return HttpResultV2(HttpStatusCode.NotFound, { message: 'Item with provided petId is not found' });
+        
+        const serialized = petSerializer(result.Items)
+        return HttpResultV2(HttpStatusCode.OK, serialized[0]);
+
+    } catch (error) {
         log.error(JSON.stringify(error));
         return HttpResultV2(HttpStatusCode.InternalServerError, error);
-    });
+    }
 }

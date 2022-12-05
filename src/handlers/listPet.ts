@@ -2,8 +2,9 @@ import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
 import { HttpResultV2 } from '../libs';
+import { petSerializer } from '../libs/serializer';
 
-import { HttpStatusCode, ListPetQuerySchema, PetSortKeyMetadata, TableName } from '../models';
+import { HttpStatusCode, IdPrefix, ListPetQuerySchema, TableName } from '../models';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -23,19 +24,26 @@ export const listPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
     const params: DynamoDB.DocumentClient.ScanInput = {
         TableName: TableName.Pet,
         ExpressionAttributeNames: isStatusQuery ? 
-            { '#t': 'type', '#s': 'status' }:
-            { '#t': 'type' },
+            { '#pk': 'id', '#s': 'status' }:
+            { '#pk': 'id' },
         ExpressionAttributeValues: isStatusQuery ? 
-            { ':t' : PetSortKeyMetadata, ':s': query.status }:
-            { ':t' : PetSortKeyMetadata },
-        FilterExpression: `#t = :t${isStatusQuery ? ' AND #s = :s' : ''}`
+            { ':pk': IdPrefix.Pet, ':s': query.status }:
+            { ':pk': IdPrefix.Pet },
+        FilterExpression: `begins_with(#pk, :pk)${isStatusQuery ? ' AND #s = :s' : ''}`
     };
 
-    return dynamoDb.scan(params).promise().then(result => {
-        log.info('createPet completed');
-        return HttpResultV2(HttpStatusCode.OK, result.Items);
-    }).catch(error => {
+    try {
+        const result = await dynamoDb.scan(params).promise();
+
+        if (!result.Items) {
+            return HttpResultV2(HttpStatusCode.OK, []);
+        }
+
+        const serialized = petSerializer(result.Items);
+        return HttpResultV2(HttpStatusCode.OK, serialized);
+
+    } catch (error) {
         log.error(JSON.stringify(error));
         return HttpResultV2(HttpStatusCode.InternalServerError, error);
-    });
+    }
 }
