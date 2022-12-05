@@ -1,57 +1,74 @@
 # petstore
 A sample project for demonstrating capability to implement simple full-stack application
 
-### Project Description
+## About Project
+
+### Objective
 [API docs](https://petstore.swagger.io)
-Objective of this project is to implement above API except for user.
+- Objective of this project is to implement above API except for user
+- To demonstrate ability to create service, utilized target tech stack, and problem solving skills.
 
+### Business Logic
+- Business logics are about Petstore orders and inventory
+- A petstore employee can 1) create a pet, 2) update the pet, 3) read pet's data, or 4) delete the pet in the store inventory.
+- A customer can 1) create an order, 2) read the order.
+- After an order is placed, the employ can change the order state to approve or deliver.
+- The employee can add photos to the pet inventory
 
-### Endpoints
-```
-PET APIs
+## Demonstration Via Postman
+-
 
-[Health Check]
-GET - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/
+## About Architecture
 
-[Upload Image of the Pet]
-POST - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/pet/{petId}/uploadImage
+### Cloud Formation Deploy via Serverless
+[formation](https://miro.medium.com/max/1400/1*c4lIbMQLDydxSzc_Q68t7w.webp)
+- I could configure cloud formation via serverless.yml
+- Via serveless configuration, API Gateway, Lambda functions, DynamoDB and CloudWatch log will be automatically configured
+- S3 was configured manually
 
-[Create a Pet]
-POST - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/pet
+### Overally Architecture
+[arch](https://user-images.githubusercontent.com/17560082/205744326-c1c7847c-6973-4761-a111-c1796626ace3.png)
+- HTTP request comes to API gateway
+- API gateway redirect request Lambda function that associated with request route
+- Lambda function will perform computational work such as using DB, save files on S3, or logging.
 
-[List Pets (with query for filtering status)]
-GET - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/pet
+## About Data
 
-[Get a Pet]
-GET - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/pet/{petId}
+### Entities
+[data](https://user-images.githubusercontent.com/17560082/205663257-8127d216-4b62-45f0-8829-3a716febf086.png)
+- There are 5 different data entities
+- The point is that 'pet' is related to every other entities and acts as a primary entites
 
-[Update a Pet]
-PUT - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/pet/{petId}
+### DynamoDB
+[dynamodb key](https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2018/09/10/dynamodb-partition-key-1.gif)
+- DynamoDB has unique key system: a partition key or partition key / sort key combination as a primary key
+- We can have efficient design by grouping entities with single partition key. Entities would be sort key
+- Items with same partition key are placed near to each other. Groupping them and querying with partition key will make good performance
 
-[Change Status of a Pet]
-POST - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/pet/{petId}
+### Data Modeling
+[pet table](https://user-images.githubusercontent.com/17560082/205738851-9cfaa10d-9bb4-4eb9-8176-f1e36d6d4959.png)
+- Since every entities are related to pet, PetID would be the partition key
+- Each other entities will be represented as sortkey. For example, an order of pet can be accessed with a key [{petId}, 'order']
+- There can be duplicate Tags and Categories among pets. To track all tags and categories, save it separately.
 
-[Delete a Pet]
-DELETE - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/pet/{petId}
+### Special Cases for Indexing
+[index](https://user-images.githubusercontent.com/17560082/205740679-8e6f162a-7004-4a0d-9599-23bbe48e55d3.png)
+- In the API spec, we can find 2 APIs that filter for 'status' and count distict 'status'
+- Scan throughout all database and filtering out would be slow
+- We can have secondary index for 'status' to increase performance
 
+## About API Design
+[ids](https://user-images.githubusercontent.com/17560082/205741593-c6bb3ef0-b2e5-489c-9fb6-45db713a7df2.png)
+For API Design, I only want to mention about the differences with original [API docs](https://petstore.swagger.io)
+- Pet ID: petId is changed from integer64 to string. This is because to hold UUID, as well as the partition key should hold the prefix 'pet-'
+- Order ID: Since store/order and pet are one to one relationship, there is no need to have separate id for order. It is changed to have same partition key as pet, and now has sort key as 'order'
 
-
-Order APIs
-
-[Create an Order]
-POST - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/store/order
-
-[List all Orders]
-GET - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/store/order
-
-[Get an Order]
-GET - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/store/order/{orderId}
-
-[Delete an Order]
-DELETE - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/store/order/{orderId}
-
-[Check Inventory]
-GET - https://82tydndjvi.execute-api.us-west-1.amazonaws.com/store/inventory
-```
-
-TBD
+## Additional Subjects
+- [ ] Explain how API Gateway and AWS Lambda interact vs using an Express Framework
+- [ ] Explain how authentication would be implemented with API Gateway using AWS Cognito
+- [ ] Demonstrate how to use CloudWatch Logs to show error conditions
+- [ ] Demonstrate how to use CloudWatch Logs to support development
+- [ ] Explain how the areas of improvement for scalability or highlight areas where particular attention was given to scalability
+- [ ] Explain any other technologies and how/why they were used in the demonstration
+- [ ] Demonstrate a Git flow that shows how you would maintain a development branch along with a main branch used for production
+- [ ] Identify and implement improvements to the swagger design (example, look at how id’s are created and handled on POSTs)
