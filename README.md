@@ -32,6 +32,7 @@ A sample project for demonstrating capability to implement simple full-stack app
 - API gateway redirect request Lambda function that associated with request route
 - Lambda function will perform computational work such as using DB, save files on S3, or logging.
 
+
 ## About Data
 
 ### Entities
@@ -62,6 +63,24 @@ A sample project for demonstrating capability to implement simple full-stack app
 For API Design, I only want to mention about the differences with original [API docs](https://petstore.swagger.io)
 - Pet ID: petId is changed from integer64 to string. This is because to hold UUID, as well as the partition key should hold the prefix 'pet-'
 - Order ID: Since store/order and pet are one to one relationship, there is no need to have separate id for order. It is changed to have same partition key as pet, and now has sort key as 'order'
+
+## Others
+
+### Project Management
+[github projects](https://user-images.githubusercontent.com/17560082/205745122-8b7f4080-15c6-4186-84d4-e6bf8665fffc.png)
+- I used [github project](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects) to keep track of the preject progress.
+- Kanban board style project was used.
+- Good thing about Github Project is that items on board can be directly marked as issue, and can be connected to pull requests. Which helps to take down each tasks in development phase as well as tracking issues at the maintenance phase
+
+### Git Flow
+[messy](https://user-images.githubusercontent.com/17560082/205746221-ccef7221-42d8-4cbc-8f5c-dbd3e95b8acd.png)
+- It is bit messy but this is my recent git flow of my project.
+- Usually I trys to follow main-development-feature branch style
+- main branch is for release
+- development branch is for ongoing developing and staging
+- feature branchss are for developing new features
+- issue branches can be used when urgent fix is needed to main branch
+
 
 ## Additional Subjects
 - [ ] Explain how API Gateway and AWS Lambda interact vs using an Express Framework
