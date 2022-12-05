@@ -37,15 +37,7 @@ export const findPetByStatus = async (event: APIGatewayEvent): Promise<APIGatewa
         const statusScanResult = await dynamoDb.scan(statusScanParams).promise();
 
         if (!statusScanResult.Items || statusScanResult.Items.length == 0) return HttpResultV2(HttpStatusCode.OK, []);
-        let petIdSetString = JSON.stringify(statusScanResult.Items.map(item => item.id)).replace(/\"/g, '\'');
-        
-        const qlParams: DynamoDB.ExecuteStatementInput = { 
-            Statement: `SELECT * FROM ${TableName.Pet} WHERE id IN ${petIdSetString}`
-        }
-        console.log(qlParams);
-
-        const result = await partiQL.executeStatement(qlParams).promise();
-        return HttpResultV2(HttpStatusCode.OK, result);
+        return HttpResultV2(HttpStatusCode.OK, statusScanResult.Items);
 
         // if (!result.Items || result.Items.length == 0) return HttpResultV2(HttpStatusCode.OK, []);
         // const serialized = petSerializer(result.Items);

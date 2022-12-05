@@ -2,7 +2,7 @@ import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
 
-import { TableName, UpdatePetRequestBodySchema, PetIdParamSchema, HttpStatusCode, PetSortKey } from '../models';
+import { TableName, UpdatePetRequestBodySchema, PetIdParamSchema, HttpStatusCode, PetSortKey, IdPrefix, CategorySortKey, ImageSortKey } from '../models';
 import { HttpResultV2 } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -29,7 +29,23 @@ export const updatePet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
         return HttpResultV2(HttpStatusCode.Invalid, { message: arrayOfMessage });
     }
 
-    const params: DynamoDB.DocumentClient.UpdateItemInput = {
+    const transactionParams: DynamoDB.DocumentClient.TransactWriteItemsInput = {
+        TransactItems: []
+    }
+
+    const isCategory = !!value.category;
+    const isTags = !!value.tag;
+
+    const attributeValues: { [key: string]: any } = {
+        ':id': pathParameter.petId,
+        ':n': value.name,
+        ':s': value.status,
+        ':u': datetime
+    }
+    if (isCategory) attributeValues[':c'] = value.category;
+    if (isTags) attributeValues[':t'] = value.tags;
+
+    const updateParams: DynamoDB.DocumentClient.Update = {
         TableName: TableName.Pet,
         Key: {
             id: pathParameter.petId,
@@ -37,27 +53,61 @@ export const updatePet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
         },
         ExpressionAttributeNames: {
             '#n': 'name',
-            '#s': 'status'
+            '#s': 'status',
         },
-        ExpressionAttributeValues: {
-            ':id': pathParameter.petId,
-            ':n': value.name,
-            ':p': value.photoUrls,
-            ':s': value.status,
-            ':u': datetime
-        },
-        UpdateExpression: 'set #n = :n, photoUrls = :p, #s = :s, updatedAt = :u',
-        ConditionExpression: 'id = :id'
+        ExpressionAttributeValues: attributeValues,
+        ConditionExpression: 'id = :id',
+        UpdateExpression: `SET ${isCategory ? 'category = :c, ':''}#n = :n, #s = :s, ${isTags ? 'tags = :t,':''}updatedAt = :u`
     };
+    transactionParams.TransactItems.push({ Update: updateParams });
 
-    return dynamoDb.update(params).promise().then(result => {
+    if (isCategory) {
+        const categoryId = IdPrefix.Category + value.category;
+        transactionParams.TransactItems.push({ Put: {
+            TableName: TableName.Pet,
+            Item: {
+                id: pathParameter.petId,
+                type: categoryId,
+                name: value.category
+            }
+        }});
+        transactionParams.TransactItems.push({ Put: {
+            TableName: TableName.Pet,
+            Item: {
+                id: categoryId,
+                type: CategorySortKey.Metadata,
+                name: value.category
+            }
+        }});
+    }
+
+    if (value.tags && value.tags.length > 0) {
+        value.tags.map((tag: any) => {
+            const tagId = IdPrefix.Tag + tag;
+            transactionParams.TransactItems.push({ Put: {
+                TableName: TableName.Pet,
+                Item: {
+                    id: pathParameter.petId,
+                    type: tagId,
+                    name: tag
+                }
+            }});
+            transactionParams.TransactItems.push({ Put: {
+                TableName: TableName.Pet,
+                Item: {
+                    id: tagId,
+                    type: PetSortKey.Metadata,
+                    name: tag
+                }
+            }})
+        });
+    }
+
+    return dynamoDb.transactWrite(transactionParams).promise().then(result => {
         return HttpResultV2(HttpStatusCode.OK, result);
     }).catch(error => {
         log.error(JSON.stringify(error));
 
-        if (error.code == 'ConditionalCheckFailedException') {
-            return HttpResultV2(HttpStatusCode.NotFound, { message: 'Item with provided petId is not found' });
-        }
         return HttpResultV2(HttpStatusCode.InternalServerError, error);
     });
 }

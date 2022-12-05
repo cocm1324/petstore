@@ -45,6 +45,19 @@ export const updatePetStatus = async (event: APIGatewayEvent): Promise<APIGatewa
     }
 
     const isCompleted = value.status == PetOrderStatus.Delivered;
+    const isName = !!value.name;
+
+    const updateNames: { [key: string]: any } = { '#s': 'status' }
+    const updateValues: { [key: string]: any } = { 
+        ':id': pathParameter.petId, 
+        ':s': isCompleted ? PetStatus.Sold : PetStatus.Pending,
+        ':u': timestamp
+    }
+    if (isName) {
+        updateNames['#n'] = 'name';
+        updateValues[':n'] = value.name;
+    }
+
     const params: DynamoDB.DocumentClient.TransactWriteItemsInput = {
         TransactItems: [
             {
@@ -73,15 +86,10 @@ export const updatePetStatus = async (event: APIGatewayEvent): Promise<APIGatewa
                         id: pathParameter.petId,
                         type: PetSortKey.Metadata,
                     },
-                    ExpressionAttributeNames: { '#n': 'name', '#s': 'status' },
-                    ExpressionAttributeValues: { 
-                        ':id': pathParameter.petId, 
-                        ':n': value.name, 
-                        ':s': isCompleted ? PetStatus.Sold : PetStatus.Pending,
-                        ':u': timestamp
-                    },
+                    ExpressionAttributeNames: updateNames,
+                    ExpressionAttributeValues: updateValues,
                     ConditionExpression: 'id = :id',
-                    UpdateExpression: 'SET #n = :n, #s = :s, updatedAt = :u'
+                    UpdateExpression: `SET ${isName ? '#n = :n,':''}#s = :s, updatedAt = :u`
                 }
             }
         ]

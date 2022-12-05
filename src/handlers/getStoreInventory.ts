@@ -26,7 +26,6 @@ export const getStoreInventory = async (event: APIGatewayEvent): Promise<APIGate
 
     try {
         const result = await dynamoDb.scan(params).promise();
-        console.log(result);
 
         if (!result.Items) return HttpResultV2(HttpStatusCode.OK, counter);
 

@@ -32,30 +32,22 @@ export const OrderIdParamSchema = Joi.object({
 });
 
 export const UpdatePetRequestBodySchema = Joi.object({
-    category: Joi.object({
-        id: Joi.number().integer().min(0),
-        name: Joi.string()
-    }),
+
+    category: Joi.string(),
 
     name: Joi.string()
         .required(),
-    
-    photoUrls: Joi.array()
-        .items(Joi.string())
-        .required(),
-
-    tags: Joi.array().items(Joi.object({
-        id: Joi.number().integer().min(0),
-        name: Joi.string()
-    })),
 
     status: Joi.string()
         .valid(...Object.values(PetStatus))
-        .default(PetStatus.Available)
+        .default(PetStatus.Available),
+    
+    tags: Joi.array()
+        .items(Joi.string()),
 });
 
 export const UpdateStatusPetRequestBodySchema = Joi.object({
-    name: Joi.string(),
+    name: Joi.string().default(''),
 
     status: Joi.string()
         .valid(...Object.values(PetOrderStatus))

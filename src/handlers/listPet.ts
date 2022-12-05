@@ -2,7 +2,7 @@ import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
 
-import { HttpStatusCode, IdPrefix, TableName } from '../models';
+import { HttpStatusCode, IdPrefix, PetSortKey, TableName } from '../models';
 import { HttpResultV2, petSerializer } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -12,9 +12,9 @@ export const listPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
 
     const params: DynamoDB.DocumentClient.ScanInput = {
         TableName: TableName.Pet,
-        ExpressionAttributeNames: { '#pk': 'id' },
-        ExpressionAttributeValues: { ':pk': IdPrefix.Pet },
-        FilterExpression: 'begins_with(#pk, :pk)'
+        ExpressionAttributeNames: { '#pk': 'id', '#sk': 'type' },
+        ExpressionAttributeValues: { ':pk': IdPrefix.Pet, ':sk': PetSortKey.Metadata },
+        FilterExpression: 'begins_with(#pk, :pk) AND #sk = :sk'
     };
 
     try {
@@ -24,8 +24,7 @@ export const listPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
             return HttpResultV2(HttpStatusCode.OK, []);
         }
 
-        const serialized = petSerializer(result.Items);
-        return HttpResultV2(HttpStatusCode.OK, serialized);
+        return HttpResultV2(HttpStatusCode.OK, result.Items);
 
     } catch (error) {
         log.error(JSON.stringify(error));

@@ -38,7 +38,7 @@ export const createPet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
             category: value.category,
             name: value.name,
             status: value.status,
-            tag: value.tag,
+            tags: value.tags,
             photoUrls: value.photoUrls,
             createdAt: timestamp,
             updatedAt: timestamp
@@ -96,7 +96,7 @@ export const createPet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
                 TableName: TableName.Pet,
                 Item: {
                     id: tagId,
-                    type: ImageSortKey.Metadata,
+                    type: PetSortKey.Metadata,
                     name: tag
                 }
             }})
