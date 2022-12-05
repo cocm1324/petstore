@@ -14,6 +14,26 @@ export enum TableName {
     Pet = 'pet'
 }
 
+export enum IdPrefix {
+    Pet = 'pet-',
+    Image = 'image-',
+    Category = 'category-',
+    Tag = 'tag-'
+}
+
+export enum PetSortKey {
+    Metadata = 'metadata',
+    Order = 'order',
+}
+
+export enum ImageSortKey {
+    Metadata = 'metadata'
+}
+
+export enum CategorySortKey {
+    Metadata = 'metadata'
+}
+
 export enum HttpStatusCode {
     OK = 200,
     Created = 201,

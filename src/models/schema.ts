@@ -2,10 +2,7 @@ import * as Joi from 'joi';
 import { PetOrderStatus, PetStatus } from './enums';
 
 export const CreatePetRequestBodySchema = Joi.object({
-    category: Joi.object({
-        id: Joi.number().integer().min(0),
-        name: Joi.string()
-    }),
+    category: Joi.string(),
 
     name: Joi.string()
         .required(),
@@ -14,10 +11,8 @@ export const CreatePetRequestBodySchema = Joi.object({
         .items(Joi.string())
         .required(),
 
-    tags: Joi.array().items(Joi.object({
-        id: Joi.number().integer().min(0),
-        name: Joi.string()
-    })),
+    tags: Joi.array()
+        .items(Joi.string()),
 
     status: Joi.string()
         .valid(...Object.values(PetStatus))
@@ -79,7 +74,6 @@ export const ListPetQuerySchema = Joi.object({
 
 export const CreateStoreOrderRequestBodySchema = Joi.object({
     petId: Joi.string()
-        .uuid()
         .required(),
     
     quantity: Joi.number()
