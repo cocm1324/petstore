@@ -15,9 +15,6 @@ A sample project for demonstrating capability to implement simple full-stack app
 - After an order is placed, the employ can change the order state to approve or deliver.
 - The employee can add photos to the pet inventory
 
-## Demonstration Via Postman
-Demonstration
-
 ## About Architecture
 
 ### Cloud Formation Deploy via Serverless
@@ -26,7 +23,7 @@ Demonstration
 - Via serveless configuration, API Gateway, Lambda functions, DynamoDB and CloudWatch log will be automatically configured
 - S3 was configured manually
 
-### Overally Architecture
+### Overall Architecture
 ![arch](https://user-images.githubusercontent.com/17560082/205744326-c1c7847c-6973-4761-a111-c1796626ace3.png)
 - HTTP request comes to API gateway
 - API gateway redirect request Lambda function that associated with request route
