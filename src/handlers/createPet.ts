@@ -3,7 +3,10 @@ import { DynamoDB } from 'aws-sdk';
 import { v4 } from 'uuid';
 import * as log from 'lambda-log';
 
-import { TableName, CreatePetRequestBodySchema, HttpStatusCode, IdPrefix, PetSortKey, ImageSortKey, CategorySortKey } from '../models';
+import { 
+    TableName, CreatePetRequestBodySchema, HttpStatusCode, IdPrefix,
+    PetSortKey, ImageSortKey, CategorySortKey 
+} from '../models';
 import { HttpResultV2 } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -32,10 +35,13 @@ export const createPet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
         Item: {
             id: petId,
             type: PetSortKey.Metadata,
+            category: value.category,
             name: value.name,
             status: value.status,
+            tags: value.tags,
+            photoUrls: value.photoUrls,
             createdAt: timestamp,
-            updatedAt: timestamp,
+            updatedAt: timestamp
         }
     };
     dbParams.TransactItems.push({ Put: matadataParams });
@@ -90,7 +96,7 @@ export const createPet = async (event: APIGatewayEvent): Promise<APIGatewayProxy
                 TableName: TableName.Pet,
                 Item: {
                     id: tagId,
-                    type: ImageSortKey.Metadata,
+                    type: PetSortKey.Metadata,
                     name: tag
                 }
             }})

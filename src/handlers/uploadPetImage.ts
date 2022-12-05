@@ -1,18 +1,17 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB, S3 } from 'aws-sdk';
-import { parse } from 'lambda-multipart-parser';
 import { v4 } from 'uuid';
+import { parse } from 'lambda-multipart-parser';
 import * as log from 'lambda-log';
 
-import { TableName, PetIdParamSchema, HttpStatusCode, UploadImagePetRequestBodySchema, IdPrefix } from '../models';
+import { TableName, PetIdParamSchema, HttpStatusCode, UploadImagePetRequestBodySchema, IdPrefix, PetSortKey } from '../models';
 import { HttpResultV2 } from '../libs';
-
 import credentials from '../../credentials.json';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 const s3 = new S3(credentials);
 
-export const uploadImagePet = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const uploadPetImage = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     log.options.meta.event = event;
     
     const timestamp = (new Date()).toISOString();
@@ -60,7 +59,7 @@ export const uploadImagePet = async (event: APIGatewayEvent): Promise<APIGateway
         const s3Result = await s3.upload(s3Params).promise();
         const { Location } = s3Result;
 
-        const dbParams: DynamoDB.DocumentClient.PutItemInput = {
+        const putImageParam: DynamoDB.DocumentClient.PutItemInput = {
             TableName: TableName.Pet,
             Item: {
                 id: pathParameter.petId,
@@ -69,11 +68,34 @@ export const uploadImagePet = async (event: APIGatewayEvent): Promise<APIGateway
                 url: Location,
                 additionalMetadata: value.additionalMetadata
             }
-        }
+        };
 
-        await dynamoDb.put(dbParams).promise();
+        const updatePetParam: DynamoDB.DocumentClient.Update = {
+            TableName: TableName.Pet,
+            Key: {
+                id: pathParameter.petId,
+                type: PetSortKey.Metadata
+            },
+            ExpressionAttributeValues: { 
+                ':id': pathParameter.petId,
+                ':i': [ Location ],
+                ':u': timestamp
+            },
+            ConditionExpression: 'id = :id',
+            UpdateExpression: 'SET photoUrls = list_append(photoUrls, :i), updatedAt = :u',
+        };
+
+        const params: DynamoDB.DocumentClient.TransactWriteItemsInput = {
+            TransactItems: [
+                { Put: putImageParam },
+                { Update: updatePetParam }
+            ]
+        };
+
+        await dynamoDb.transactWrite(params).promise();
 
         return HttpResultV2(HttpStatusCode.OK, {});
+
     } catch (error) {
         return HttpResultV2(HttpStatusCode.InternalServerError, error);
     };

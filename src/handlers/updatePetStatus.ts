@@ -1,14 +1,17 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { parse } from 'lambda-multipart-parser';
 import { DynamoDB } from 'aws-sdk';
+import { parse } from 'lambda-multipart-parser';
 import * as log from 'lambda-log';
 
-import { HttpStatusCode, PetIdParamSchema, PetOrderStatus, PetSortKeyMetadata, PetSortKeyOrder, PetStatus, TableName, UpdateStatusPetRequestBodySchema } from '../models';
+import { 
+    HttpStatusCode, PetIdParamSchema, PetOrderStatus, PetSortKey, 
+    PetStatus, TableName, UpdateStatusPetRequestBodySchema 
+} from '../models';
 import { HttpResultV2 } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
-export const updateStatusPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
+export const updatePetStatus = async (event: APIGatewayEvent): Promise<APIGatewayProxyResultV2> => {
     log.options.meta.event = event;
 
     const timestamp = (new Date()).toISOString();
@@ -42,6 +45,19 @@ export const updateStatusPet = async (event: APIGatewayEvent): Promise<APIGatewa
     }
 
     const isCompleted = value.status == PetOrderStatus.Delivered;
+    const isName = !!value.name;
+
+    const updateNames: { [key: string]: any } = { '#s': 'status' }
+    const updateValues: { [key: string]: any } = { 
+        ':id': pathParameter.petId, 
+        ':s': isCompleted ? PetStatus.Sold : PetStatus.Pending,
+        ':u': timestamp
+    }
+    if (isName) {
+        updateNames['#n'] = 'name';
+        updateValues[':n'] = value.name;
+    }
+
     const params: DynamoDB.DocumentClient.TransactWriteItemsInput = {
         TransactItems: [
             {
@@ -49,7 +65,7 @@ export const updateStatusPet = async (event: APIGatewayEvent): Promise<APIGatewa
                     TableName: TableName.Pet,
                     Key: {
                         id: pathParameter.petId,
-                        type: PetSortKeyOrder,
+                        type: PetSortKey.Order,
                     },
                     ExpressionAttributeNames: { '#s': 'status' },
                     ExpressionAttributeValues: { 
@@ -68,17 +84,12 @@ export const updateStatusPet = async (event: APIGatewayEvent): Promise<APIGatewa
                     TableName: TableName.Pet,
                     Key: {
                         id: pathParameter.petId,
-                        type: PetSortKeyMetadata,
+                        type: PetSortKey.Metadata,
                     },
-                    ExpressionAttributeNames: { '#n': 'name', '#s': 'status' },
-                    ExpressionAttributeValues: { 
-                        ':id': pathParameter.petId, 
-                        ':n': value.name, 
-                        ':s': isCompleted ? PetStatus.Sold : PetStatus.Pending,
-                        ':u': timestamp
-                    },
+                    ExpressionAttributeNames: updateNames,
+                    ExpressionAttributeValues: updateValues,
                     ConditionExpression: 'id = :id',
-                    UpdateExpression: 'SET #n = :n, #s = :s, updatedAt = :u'
+                    UpdateExpression: `SET ${isName ? '#n = :n,':''}#s = :s, updatedAt = :u`
                 }
             }
         ]

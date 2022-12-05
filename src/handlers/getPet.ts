@@ -1,10 +1,9 @@
 import { APIGatewayEvent, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
 import * as log from 'lambda-log';
-import { HttpResultV2 } from '../libs';
-import { petSerializer } from '../libs/serializer';
 
-import { TableName, PetIdParamSchema, HttpStatusCode } from '../models';
+import { TableName, PetIdParamSchema, HttpStatusCode, PetSortKey } from '../models';
+import { HttpResultV2, petSerializer } from '../libs';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -19,20 +18,19 @@ export const getPet = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
         return HttpResultV2(HttpStatusCode.Invalid, { message: arrayOfMessage });
     }
 
-
     try {
-        const params: DynamoDB.DocumentClient.ScanInput = {
+        const params: DynamoDB.DocumentClient.GetItemInput = {
             TableName: TableName.Pet,
-            ExpressionAttributeNames: { '#pk': 'id' },
-            ExpressionAttributeValues: { ':pk': pathParameter.petId },
-            FilterExpression: '#pk = :pk'
+            Key: {
+                id: pathParameter.petId,
+                type: PetSortKey.Metadata
+            }
         };
 
-        const result = await dynamoDb.scan(params).promise();
-        if (!result.Items) return HttpResultV2(HttpStatusCode.NotFound, { message: 'Item with provided petId is not found' });
+        const result = await dynamoDb.get(params).promise();
+        if (!result.Item) return HttpResultV2(HttpStatusCode.NotFound, { message: 'Item with provided petId is not found' });
         
-        const serialized = petSerializer(result.Items)
-        return HttpResultV2(HttpStatusCode.OK, serialized[0]);
+        return HttpResultV2(HttpStatusCode.OK, result.Item);
 
     } catch (error) {
         log.error(JSON.stringify(error));

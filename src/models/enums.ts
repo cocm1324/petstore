@@ -14,6 +14,10 @@ export enum TableName {
     Pet = 'pet'
 }
 
+export enum PetTableIndex {
+    Status = 'status-index'
+}
+
 export enum IdPrefix {
     Pet = 'pet-',
     Image = 'image-',
